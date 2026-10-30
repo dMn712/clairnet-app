@@ -2,8 +2,9 @@
   "use strict";
 
   // ==========================================
-  // CLAIRNET ENGINE 1.3.0
-  // Détection locale des signaux suspects
+  // CLAIRNET ENGINE 1.4.0
+  // Détection locale : livraison, banque,
+  // administration et autres arnaques
   // ==========================================
 
   function normalize(value) {
@@ -14,54 +15,59 @@
   }
 
   const RULES = [
+
+    // ------------------------------------------
+    // SIGNAUX GENERAUX
+    // ------------------------------------------
+
     {
       id: "urgency",
       points: 14,
       title: "Pression ou urgence",
       detail: "Le message impose un délai ou cherche à provoquer une réaction précipitée.",
-      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque|dans les prochaines minutes|aujourd'hui avant|sous 24 heures)\b/
+      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque|dans les prochaines minutes|aujourd'hui avant|sous 24 heures|dans les 24 heures)\b/
     },
     {
       id: "credentials",
       points: 30,
       title: "Demande d'informations sensibles",
       detail: "Le message demande ou évoque des identifiants, mots de passe, codes ou données bancaires sensibles.",
-      pattern: /\b(mots? de passe|identifiants?(?: bancaires?)?|identifiant de connexion|code sms|codes? de validation|codes? confidentiels?|coordonnees bancaires|numero de carte|cryptogramme|code secret|donnees bancaires|informations bancaires|acces a votre compte)\b/
+      pattern: /\b(mots? de passe|identifiants?(?: bancaires?)?|identifiant de connexion|code sms|codes? de validation|codes? confidentiels?|coordonnees bancaires|numero de carte|cryptogramme|code secret|donnees bancaires|informations bancaires|acces a votre compte|code de securite|code a usage unique)\b/
     },
     {
       id: "identity",
       points: 10,
       title: "Demande de confirmation d'identité",
       detail: "Le message demande de confirmer ou de vérifier votre identité. Cette demande doit être contrôlée auprès de l'organisme officiel.",
-      pattern: /\b(confirmez|confirmer|verifiez|verifier|validez|valider)\b.{0,80}\b(votre identite|votre compte|vos informations|vos donnees personnelles)\b|\b(confirmation|verification)\b.{0,60}\b(identite|compte bancaire|donnees personnelles)\b/
+      pattern: /\b(confirmez|confirmer|verifiez|verifier|validez|valider|actualisez|actualiser)\b.{0,100}\b(votre identite|votre compte|vos informations|vos donnees personnelles|votre profil)\b|\b(confirmation|verification)\b.{0,60}\b(identite|compte bancaire|donnees personnelles)\b/
     },
     {
       id: "payment",
       points: 17,
       title: "Demande d'argent ou de paiement",
       detail: "Une demande de paiement ou de transfert inattendue mérite une vérification indépendante.",
-      pattern: /\b(payer|paiement|reglez|regler|frais de livraison|remboursement|virement|amende|impaye|carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|crypto)\b/
+      pattern: /\b(payer|paiement|reglez|regler|frais de livraison|remboursement|virement|amende|impaye|carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|crypto|somme a regler|montant a payer)\b/
     },
     {
       id: "link_action",
       points: 12,
       title: "Invitation à cliquer ou se connecter",
       detail: "Le message incite à utiliser un lien pour effectuer une action ou accéder à un compte.",
-      pattern: /\b(cliquez ici|cliquer ici|cliquant sur le lien|cliquez sur le lien|cliquer sur le lien|en cliquant|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|rendez-vous sur le lien|consultez le lien|cliquez sur ce lien|cliquant sur ce lien|en cliquant sur ce lien)\b/
+      pattern: /\b(cliquez ici|cliquer ici|cliquant sur le lien|cliquez sur le lien|cliquer sur le lien|en cliquant|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|rendez-vous sur le lien|consultez le lien|cliquez sur ce lien|cliquant sur ce lien|en cliquant sur ce lien|espace personnel via ce lien)\b/
     },
     {
       id: "threat",
       points: 13,
       title: "Menace ou conséquence alarmante",
       detail: "Une menace ou une conséquence grave peut servir à vous faire agir rapidement.",
-      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation|suspension definitive|blocage definitif|colis detruit|colis retourne a l'expediteur)\b/
+      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation|suspension definitive|blocage definitif|colis detruit|colis retourne a l'expediteur|suppression de vos droits)\b/
     },
     {
       id: "phone",
       points: 18,
       title: "Demande de rappel suspecte",
       detail: "Le message demande de rappeler un prétendu service de sécurité ou un conseiller.",
-      pattern: /\b(rappelez|rappeler|appelez|appeler)\b.{0,100}\b(service securite|service antifraude|centre d'opposition|conseiller bancaire|service bancaire)\b/
+      pattern: /\b(rappelez|rappeler|appelez|appeler)\b.{0,100}\b(service securite|service antifraude|centre d'opposition|conseiller bancaire|service bancaire|service fraude)\b/
     },
     {
       id: "remote",
@@ -78,35 +84,101 @@
       pattern: /\b(coupons? pcs|tickets? transcash|codes? neosurf|cartes? cadeaux|bitcoin|cryptomonnaies?)\b/
     },
 
-    // Détection spécifique aux livraisons
+    // ------------------------------------------
+    // LIVRAISON ET TRANSPORTEURS
+    // ------------------------------------------
+
     {
       id: "delivery_context",
       points: 8,
       title: "Contexte de livraison ou de colis",
       detail: "Le message concerne un colis, un suivi ou une livraison. Ce contexte peut être utilisé dans des tentatives d'hameçonnage.",
-      pattern: /\b(colis|livraison|livreur|transporteur|suivi de colis|numero de suivi|expedition|expediteur|destinataire|point relais|relais colis|retrait du colis|distribution du colis)\b/
+      pattern: /\b(colis|livraison|livreur|transporteur|suivi de colis|numero de suivi|expedition|expediteur|destinataire|point relais|relais colis|retrait du colis|distribution du colis|colissimo|chronopost|mondial relay|dhl|ups|fedex)\b/
     },
     {
       id: "delivery_fee",
       points: 18,
       title: "Frais de livraison ou de douane demandés",
       detail: "Une somme est réclamée pour débloquer, recevoir ou reprogrammer une livraison. Vérifiez cette demande directement auprès du transporteur.",
-      pattern: /\b(frais de livraison|frais supplementaires|frais de douane|frais de dossier|frais de reexpedition|payer les frais|regler les frais|droits de douane|petit paiement pour recevoir|paiement pour debloquer|taxe de livraison|supplement de livraison)\b/
+      pattern: /\b(frais de livraison|frais supplementaires|frais de douane|frais de dossier|frais de reexpedition|payer les frais|regler les frais|droits de douane|petit paiement pour recevoir|paiement pour debloquer|taxe de livraison|supplement de livraison|frais pour recevoir votre colis|payer pour debloquer votre colis)\b/
     },
     {
       id: "delivery_problem",
-      points: 10,
+      points: 12,
       title: "Problème de livraison annoncé",
       detail: "Le message annonce un colis bloqué, retenu ou une livraison impossible. Vérifiez le suivi depuis le site officiel du transporteur.",
-      pattern: /\b(colis bloque|colis retenu|colis en attente|livraison bloquee|livraison impossible|probleme de livraison|echec de livraison|adresse incomplete|adresse incorrecte|colis suspendu|colis non distribue|reprogrammer la livraison|reprogrammez votre livraison|nouvelle tentative de livraison)\b/
+      pattern: /\b(?:colis|livraison|colissimo|chronopost|mondial relay|dhl|ups|fedex)\b.{0,80}\b(?:bloque|retenu|en attente|suspendu|non distribue|introuvable|impossible|echoue|interrompu|reporte)\b|\b(?:bloque|retenu|en attente|suspendu|non distribue|introuvable|impossible|echoue|interrompu|reporte)\b.{0,80}\b(?:colis|livraison|colissimo|chronopost|mondial relay|dhl|ups|fedex)\b|\b(adresse incomplete|adresse incorrecte|reprogrammer la livraison|reprogrammez votre livraison|nouvelle tentative de livraison|echec de livraison)\b/
     },
+
+    // ------------------------------------------
+    // ARNAQUES BANCAIRES
+    // ------------------------------------------
+
+    {
+      id: "bank_context",
+      points: 6,
+      title: "Contexte bancaire ou financier",
+      detail: "Le message évoque une banque, une carte ou un compte financier. Vérifiez l'expéditeur avant toute action.",
+      pattern: /\b(compte bancaire|banque en ligne|carte bancaire|espace bancaire|service bancaire|conseiller bancaire|operation bancaire|transaction bancaire|votre banque|service antifraude|service fraude bancaire|securite de votre compte)\b/
+    },
+    {
+      id: "bank_threat",
+      points: 16,
+      title: "Alerte ou blocage de compte bancaire",
+      detail: "Le message annonce une suspension, un blocage ou une opération suspecte sur un compte bancaire.",
+      pattern: /\b(compte|carte bancaire|carte)\b.{0,80}\b(suspendu|bloque|desactive|restreint|compromis|pirate)\b|\b(activite suspecte|operation inhabituelle|transaction inhabituelle|tentative de fraude|paiement suspect|acces non autorise|votre compte sera ferme)\b/
+    },
+    {
+      id: "bank_advisor",
+      points: 18,
+      title: "Faux conseiller ou service bancaire à vérifier",
+      detail: "Une personne prétend agir pour votre banque ou son service de sécurité. Ne communiquez jamais vos codes et rappelez uniquement un numéro officiel.",
+      pattern: /\b(conseiller bancaire|conseiller securite|service securite bancaire|service antifraude|service fraude bancaire|cellule antifraude|agent de securite bancaire|conseiller de votre banque)\b/
+    },
+    {
+      id: "bank_transfer",
+      points: 18,
+      title: "Opération bancaire ou virement à vérifier",
+      detail: "Le message évoque un virement ou une opération financière qui doit être vérifiée depuis votre application bancaire officielle.",
+      pattern: /\b(virement en attente|virement suspect|annuler un virement|valider un virement|confirmer un virement|operation a valider|transaction a confirmer|opposition bancaire|annulation de paiement)\b/
+    },
+
+    // ------------------------------------------
+    // ADMINISTRATION ET SERVICES PUBLICS
+    // ------------------------------------------
+
+    {
+      id: "admin_context",
+      points: 6,
+      title: "Administration ou organisme public mentionné",
+      detail: "Le message mentionne un organisme public ou social. Son nom peut être usurpé.",
+      pattern: /\b(caf|caisse d'allocations familiales|ameli|assurance maladie|securite sociale|impots|impots\.gouv\.fr|service public|service-public\.fr|france travail|pole emploi|retraite|urssaf|ants)\b/
+    },
+    {
+      id: "admin_refund",
+      points: 15,
+      title: "Remboursement ou aide administrative annoncé",
+      detail: "Un remboursement, une allocation ou une aide financière est annoncé. Vérifiez son existence dans votre espace officiel.",
+      pattern: /\b(remboursement caf|remboursement ameli|remboursement des impots|remboursement fiscal|remboursement de la securite sociale|aide exceptionnelle|prime exceptionnelle|allocation en attente|virement de la caf|trop percu|remboursement disponible|vous avez droit a un remboursement)\b/
+    },
+    {
+      id: "admin_document",
+      points: 12,
+      title: "Dossier ou document administratif à régulariser",
+      detail: "Le message demande de compléter ou de régulariser un dossier administratif. Vérifiez directement auprès de l'organisme concerné.",
+      pattern: /\b(dossier incomplet|document manquant|piece justificative manquante|mettre a jour votre dossier|actualiser votre dossier|regulariser votre situation|droits suspendus|allocations suspendues|carte vitale bloquee|carte vitale expiree|attestation a renouveler|declaration obligatoire)\b/
+    },
+
+    // ------------------------------------------
+    // MARQUES CONNUES
+    // ------------------------------------------
 
     {
       id: "known_brand",
       points: 5,
       title: "Marque ou service connu mentionné",
       detail: "Les noms de marques peuvent être usurpés. Vérifiez l'expéditeur par un canal indépendant.",
-      pattern: /\b(bnp paribas|credit agricole|societe generale|la banque postale|caisse d'epargne|banque populaire|boursobank|fortuneo|paypal|netflix|ameli|assurance maladie|impots|impots\.gouv\.fr|service public|service-public\.fr|la poste|colissimo|chronopost|mondial relay|relais colis|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf)\b/
+      pattern: /\b(bnp paribas|credit agricole|societe generale|la banque postale|caisse d'epargne|banque populaire|boursobank|fortuneo|paypal|netflix|ameli|assurance maladie|impots|impots\.gouv\.fr|service public|service-public\.fr|la poste|colissimo|chronopost|mondial relay|relais colis|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf|france travail|urssaf|ants)\b/
     }
   ];
 
@@ -235,7 +307,7 @@
 
   window.ClairnetEngine = Object.freeze({
     analyze: analyze,
-    version: "1.3.0"
+    version: "1.4.0"
   });
 
 })();

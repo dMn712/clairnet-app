@@ -191,7 +191,21 @@ if(/mot de passe|identifiant|code sms|code de validation|code confidentiel|coord
 add(32,"Demande d'informations sensibles","Un partage de mot de passe, de code ou de données bancaires est un signal d'alerte majeur.");
 }
 
-// Contexte et actions bancaires : règles renforcées
+// Alertes de sécurité et activité inhabituelle
+const securityAlert=/activité inhabituelle|activite inhabituelle|activité suspecte|activite suspecte|connexion inhabituelle|tentative de connexion|nouvel appareil|appareil inconnu|opération inhabituelle|operation inhabituelle|mouvement suspect|alerte de sécurité|alerte de securite/.test(t);
+
+if(securityAlert){
+add(12,"Alerte de sécurité ou activité inhabituelle","Ce type d'alerte peut être légitime, mais il est aussi utilisé dans les messages d'hameçonnage. Vérifiez directement dans l'application officielle.");
+}
+
+// Demandes de vérification d'informations personnelles
+const personalVerification=/(vérifier|verifier|confirmer|actualiser|mettre à jour|mettre a jour|compléter|completer|valider|sécuriser|securiser).{0,75}(vos |les |des )?(informations|coordonnées|coordonnees|données|donnees|identité|identite|profil|compte|accès|acces)|(informations|coordonnées|coordonnees|données|donnees|identité|identite|profil|compte|accès|acces).{0,75}(vérifier|verifier|confirmer|actualiser|mettre à jour|mettre a jour|compléter|completer|valider|sécuriser|securiser)/.test(t);
+
+if(personalVerification){
+add(18,"Demande de vérification d'informations","Une demande de vérification d'informations via un message doit être contrôlée par un canal indépendant.");
+}
+
+// Contexte et actions bancaires
 const bankContext=/banque|bancaire|compte bancaire|espace bancaire|application bancaire|service bancaire|conseiller bancaire|votre banque/.test(t);
 
 const accountThreat=/(compte|accès|acces|carte bancaire|carte).{0,45}(bloqué|bloque|suspendu|suspendue|désactivé|desactive|restreint|fermé|ferme)|(bloqué|bloque|suspendu|suspendue|désactivé|desactive|restreint).{0,45}(compte|accès|acces|carte)/.test(t);
@@ -216,8 +230,9 @@ if(payment){
 add(15,"Argent ou paiement demandé","Une demande d'argent inattendue doit être vérifiée directement auprès de l'organisme concerné.");
 }
 
-// Invitation à cliquer
-if(/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|consultez .* lien|rendez-vous sur/.test(t)){
+// Invitation à cliquer ou consulter un lien
+const linkAction=/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|lien suivant|consultez le lien|en consultant le lien|confirmez via|connectez-vous via|ouvrez le lien|rendez-vous sur|à partir de ce lien|a partir de ce lien/.test(t);
+if(linkAction){
 add(12,"Invitation à cliquer ou se connecter","N'utilisez pas un lien reçu pour payer ou accéder à un compte.");
 }
 
@@ -255,15 +270,20 @@ const brand=/(laposte|colissimo|chronopost|mondialrelay|dhl|ups|fedex|amazon|pay
 const action=/(suivi|colis|livraison|paiement|confirmation|verification|securite|compte|support|douane|frais)/i.test(domain);
 const lookalike=(brand&&action)||(delivery&&action);
 
+// Recherche de termes génériques associés aux faux espaces clients
+const domainTokens=domain.replace(/\.[a-z]{2,}$/i,"").split(/[-_.]/);
+const genericSecurityWords=domainTokens.filter(word=>/^(verification|verif|compte|client|securite|security|authentification|connexion|connect|support|protection|alerte|espace|service|validation|confirm|identite)$/.test(word));
+const genericSuspiciousDomain=!brand&&genericSecurityWords.length>=2;
+
 if(reserved){
 signals.push({title:"Domaine réservé de démonstration",detail:"Cette extension est réservée aux exemples. Elle ne représente pas un véritable site de transporteur."});
-}else if(shortener||ip||punycode||labels.length>=4||lookalike){
+}else if(shortener||ip||punycode||labels.length>=4||lookalike||genericSuspiciousDomain){
 suspiciousDomain=true;
 }
 }
 
 if(suspiciousDomain){
-add(14,"Caractéristiques du domaine à examiner","Le domaine présente des caractéristiques pouvant être utilisées dans des liens trompeurs : raccourcisseur, adresse IP ou mots de suivi et de paiement.");
+add(14,"Caractéristiques du domaine à examiner","Le domaine présente des caractéristiques pouvant être utilisées dans des liens trompeurs : raccourcisseur, adresse IP, nom imitant un service ou accumulation de termes liés à un compte et à la sécurité.");
 }
 
 // Usurpation possible d'un transporteur
@@ -290,6 +310,10 @@ add(20,"Demande de rappel téléphonique suspecte","Retrouvez vous-même le num�
 if(/carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|anydesk|teamviewer|rustdesk|prise en main à distance|virement instantané/.test(t)){
 add(20,"Moyen de paiement ou accès à distance à risque","Les coupons, cryptomonnaies et outils de prise en main à distance sont fréquemment détournés.");
 }
+
+// Bonus prudent : plusieurs indices de phishing réunis
+const phishingCombination=[securityAlert,personalVerification,linkAction,hasUrl,suspiciousDomain].filter(Boolean).length;
+if(phishingCombination>=3)score+=6;
 
 // Bonus pour combinaison de signaux dans les scénarios de livraison
 const combination=[delivery,deliveryFees,hasUrl,suspiciousDomain,payment].filter(Boolean).length;

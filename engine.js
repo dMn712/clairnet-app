@@ -1,6 +1,11 @@
 (function () {
   "use strict";
 
+  // ==========================================
+  // CLAIRNET ENGINE 1.2.0
+  // Moteur local de détection de signaux suspects
+  // ==========================================
+
   function normalize(value) {
     return String(value || "")
       .toLowerCase()
@@ -14,14 +19,21 @@
       points: 14,
       title: "Pression ou urgence",
       detail: "Le message impose un délai ou cherche à provoquer une réaction précipitée.",
-      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque)\b/
+      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque|dans les prochaines minutes)\b/
     },
     {
       id: "credentials",
       points: 30,
       title: "Demande d'informations sensibles",
-      detail: "Le message évoque la transmission de mots de passe, de codes ou de données bancaires.",
-      pattern: /\b(mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnees bancaires|numero de carte|cryptogramme|code secret)\b/
+      detail: "Le message demande ou évoque des identifiants, mots de passe, codes ou données bancaires sensibles.",
+      pattern: /\b(mots? de passe|identifiants?(?: bancaires?)?|identifiant de connexion|code sms|codes? de validation|codes? confidentiels?|coordonnees bancaires|numero de carte|cryptogramme|code secret|donnees bancaires|informations bancaires|acces a votre compte)\b/
+    },
+    {
+      id: "identity",
+      points: 10,
+      title: "Demande de confirmation d'identité",
+      detail: "Le message demande de confirmer ou de vérifier votre identité. Cette demande doit être contrôlée auprès de l'organisme officiel.",
+      pattern: /\b(confirmez|confirmer|verifiez|verifier|validez|valider)\b.{0,80}\b(votre identite|votre compte|vos informations|vos donnees personnelles)\b|\b(confirmation|verification)\b.{0,60}\b(identite|compte bancaire|donnees personnelles)\b/
     },
     {
       id: "payment",
@@ -34,15 +46,15 @@
       id: "link_action",
       points: 12,
       title: "Invitation à cliquer ou se connecter",
-      detail: "Le message incite à utiliser un lien pour effectuer une action.",
-      pattern: /\b(cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien)\b/
+      detail: "Le message incite à utiliser un lien pour effectuer une action ou accéder à un compte.",
+      pattern: /\b(cliquez ici|cliquer ici|cliquant sur le lien|cliquez sur le lien|cliquer sur le lien|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|rendez-vous sur le lien|consultez le lien)\b/
     },
     {
       id: "threat",
       points: 13,
       title: "Menace ou conséquence alarmante",
       detail: "Une menace ou une conséquence grave peut servir à vous faire agir rapidement.",
-      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation)\b/
+      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation|suspension definitive|blocage definitif)\b/
     },
     {
       id: "phone",
@@ -94,6 +106,7 @@
     RULES.forEach(function (rule) {
       if (rule.pattern.test(normalized)) {
         score += rule.points;
+
         signals.push({
           title: rule.title,
           detail: rule.detail
@@ -198,7 +211,7 @@
 
   window.ClairnetEngine = Object.freeze({
     analyze: analyze,
-    version: "1.1.0"
+    version: "1.2.0"
   });
 
 })();

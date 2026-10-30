@@ -48,7 +48,6 @@ button{cursor:pointer;font:inherit}
 .item{border:1px solid var(--line);padding:13px;border-radius:12px;margin:10px 0;overflow-wrap:anywhere}
 .item strong{font-size:12px}.item p{font-size:12px;color:var(--muted);margin:5px 0}
 .notice{background:#2b2618;border:1px solid #55472a;border-radius:12px;padding:12px;font-size:11px;color:#e5d5a8;line-height:1.6;margin:15px 0}
-.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -65,7 +64,6 @@ button{cursor:pointer;font:inherit}
 <div class="small">VOTRE RÉFLEXE SÉCURITÉ</div>
 <h1>Un message vous semble suspect ? <span>Vérifions.</span></h1>
 <p class="muted">Collez votre SMS, e-mail ou message. CLAIRNET recherche les indices d'arnaque.</p>
-
 <div class="card">
 <label class="label" for="message">Texte du message à analyser</label>
 <textarea id="message" maxlength="5000" placeholder="Collez ici le message reçu..."></textarea>
@@ -76,9 +74,8 @@ button{cursor:pointer;font:inherit}
 <button class="example" data-sample="normal">Message normal</button>
 </div>
 <button class="btn primary" id="analyze">Analyser le message</button>
-<p class="small">Prototype local : aucune vérification de réputation en ligne n'est effectuée.</p>
+<p class="small">Analyse locale : aucune vérification de réputation en ligne n'est effectuée.</p>
 </div>
-
 <div class="card result" id="result" aria-live="polite">
 <div class="small">RÉSULTAT DE L'ANALYSE</div>
 <h2 id="riskTitle">Analyse terminée</h2>
@@ -92,7 +89,6 @@ button{cursor:pointer;font:inherit}
 <button class="btn primary" id="new">Nouvelle analyse</button>
 <p class="small">Un score faible ne prouve jamais qu'un message est légitime.</p>
 </div>
-
 <div class="card">
 <h3>Les 3 réflexes à retenir</h3>
 <div class="item"><strong>1. Ne cédez pas à l'urgence</strong><p>Les fraudeurs cherchent souvent à vous faire agir trop vite.</p></div>
@@ -146,7 +142,6 @@ button{cursor:pointer;font:inherit}
 <script>
 (function(){
 "use strict";
-
 const $=id=>document.getElementById(id);
 const input=$("message");
 let history=[];
@@ -158,7 +153,6 @@ bank:"ALERTE BANQUE : Votre compte sera bloqué dans les 2 heures. Une opératio
 normal:"Bonjour, votre facture du mois est disponible dans votre espace client. Vous pouvez consulter son montant et sa date d'échéance en vous connectant à votre compte. Cordialement, votre service client."
 };
 
-$("counter").textContent="0 / 5000";
 input.addEventListener("input",()=>{$("counter").textContent=input.value.length+" / 5000"});
 
 document.querySelectorAll("[data-sample]").forEach(button=>{
@@ -187,29 +181,29 @@ score+=points;
 signals.push({title,detail});
 };
 
-// 1. Urgence et pression psychologique
+// Pression et urgence
 if(/urgent|immédiatement|dans \d+ minutes?|dernier rappel|sans délai|expire aujourd'hui|action requise|suspendu|bloqué|dernier jour/.test(t)){
 add(18,"Pression ou urgence","Le message pousse à agir rapidement. Prenez le temps de vérifier la demande.");
 }
 
-// 2. Données personnelles et bancaires
+// Informations personnelles et bancaires
 if(/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme|données bancaires/.test(t)){
 add(32,"Demande d'informations sensibles","Un partage de mot de passe, de code ou de données bancaires est un signal d'alerte majeur.");
 }
 
-// 3. Paiements et demandes d'argent
+// Paiements et argent
 const payment=/payer|paiement|réglez|régler|frais|douane|taxe|virement|amende|impayé|somme due|montant à régler|carte bancaire/.test(t);
 if(payment){
 add(15,"Argent ou paiement demandé","Une demande d'argent inattendue doit être vérifiée directement auprès de l'organisme concerné.");
 }
 
-// 4. Invitations à cliquer
+// Invitation à cliquer
 if(/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|consultez .* lien|rendez-vous sur/.test(t)){
 add(12,"Invitation à cliquer ou se connecter","N'utilisez pas un lien reçu pour payer ou accéder à un compte.");
 }
 
-// 5. Scénarios de livraison
-const delivery=/colis|livraison|livreur|transporteur|expédition|expedie|expédié|envoi|suivi de colis|suivi de livraison|point relais|relais colis|distribution/.test(t);
+// Livraison et colis
+const delivery=/colis|livraison|livreur|transporteur|expédition|expedition|expédié|expedie|envoi|suivi de colis|suivi de livraison|point relais|relais colis|distribution/.test(t);
 const deliveryFees=/frais de livraison|frais d'expédition|frais d expedition|frais de douane|droits de douane|taxe de livraison|frais supplémentaires|frais supplementaires|complément de paiement|complement de paiement|reprogrammer la livraison|nouvelle tentative de livraison|colis en attente|colis bloqué|colis bloque|adresse de livraison/.test(t);
 
 if(delivery){
@@ -219,7 +213,7 @@ if(deliveryFees){
 add(17,"Frais de livraison ou de douane évoqués","Les faux avis de frais supplémentaires sont fréquents dans les arnaques à la livraison. Vérifiez toute somme demandée sur le site officiel.");
 }
 
-// 6. Détection des liens
+// Analyse des adresses web
 const urls=text.match(/(?:https?:\/\/|www\.)[^\s<>()]+/gi)||[];
 const hasUrl=urls.length>0;
 let suspiciousDomain=false;
@@ -243,7 +237,7 @@ const action=/(suivi|colis|livraison|paiement|confirmation|verification|securite
 const lookalike=(brand&&action)||(delivery&&action);
 
 if(reserved){
-add(0,"Domaine réservé de démonstration","Cette extension est réservée aux exemples et ne représente pas un véritable site de transporteur.");
+signals.push({title:"Domaine réservé de démonstration",detail:"Cette extension est réservée aux exemples. Elle ne représente pas un véritable site de transporteur."});
 }else if(shortener||ip||punycode||labels.length>=4||lookalike){
 suspiciousDomain=true;
 }
@@ -253,32 +247,32 @@ if(suspiciousDomain){
 add(14,"Caractéristiques du domaine à examiner","Le domaine présente des caractéristiques pouvant être utilisées dans des liens trompeurs : raccourcisseur, adresse IP ou mots de suivi et de paiement.");
 }
 
-// 7. Usurpation possible d'un transporteur
+// Usurpation possible d'un transporteur
 if(delivery&&hasUrl&&/(colissimo|chronopost|mondial relay|mondialrelay|la poste|dhl|ups|fedex)/i.test(t)){
 add(8,"Nom d'un transporteur associé à un lien","Un nom de transporteur peut être usurpé. Vérifiez le suivi sur son site officiel.");
 }
 
-// 8. Marques connues
+// Marques connues
 if(/paypal|netflix|ameli|assurance maladie|impôts|impots|service-public|la poste|colissimo|chronopost|mondial relay|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf/.test(t)){
 add(3,"Marque ou service connu mentionné","Les noms de marques peuvent être usurpés. Leur présence ne prouve pas l'identité de l'expéditeur.");
 }
 
-// 9. Menaces
+// Menaces
 if(/menace|poursuites|fermeture définitive|dernier avertissement|police|procès|tribunal/.test(t)){
 add(15,"Menace ou conséquence alarmante","Un ton menaçant peut servir à pousser à agir sans vérifier.");
 }
 
-// 10. Faux conseiller et rappel téléphonique
+// Faux conseiller ou rappel téléphonique
 if(/rappeler immédiatement|rappelez immédiatement|appelez immédiatement|service sécurité|service securite|service antifraude|centre d'opposition|conseiller sécurité/.test(t)){
 add(20,"Demande de rappel téléphonique suspecte","Retrouvez vous-même le numéro officiel de l'organisme.");
 }
 
-// 11. Moyens de paiement risqués et accès à distance
+// Paiement à risque et accès à distance
 if(/carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|anydesk|teamviewer|rustdesk|prise en main à distance|virement instantané/.test(t)){
 add(20,"Moyen de paiement ou accès à distance à risque","Les coupons, cryptomonnaies et outils de prise en main à distance sont fréquemment détournés.");
 }
 
-// 12. Pondération des indices cumulés
+// Bonus pour combinaison de signaux dans les scénarios de livraison
 const combination=[delivery,deliveryFees,hasUrl,suspiciousDomain,payment].filter(Boolean).length;
 if(combination>=3)score+=7;
 
@@ -299,11 +293,9 @@ const advice=level==="high"
 if(signals.length===0){
 signals.push({title:"Aucun indice courant détecté",detail:"Cela ne garantit pas que le message est légitime."});
 }
-
 if(hasUrl){
 signals.push({title:"Réputation du lien non vérifiée en ligne",detail:"CLAIRNET ne consulte pas de base de réputation et ne suit pas les redirections."});
 }
-
 return {text,score,level,title,advice,signals,time:new Date()};
 }
 
@@ -341,7 +333,7 @@ if(!history.length){
 list.textContent="Aucune analyse pour le moment.";
 return;
 }
-history.forEach((r,i)=>{
+history.forEach((r)=>{
 const div=document.createElement("div");
 div.className="item";
 const title=document.createElement("strong");
@@ -351,7 +343,11 @@ p.textContent=r.text.slice(0,110)+(r.text.length>110?"...":"");
 const button=document.createElement("button");
 button.className="example";
 button.textContent="Revoir";
-button.addEventListener("click",()=>{input.value=r.text;displayExisting(r)});
+button.addEventListener("click",()=>{
+input.value=r.text;
+$("counter").textContent=input.value.length+" / 5000";
+displayExisting(r);
+});
 div.append(title,p,button);
 list.append(div);
 });
@@ -365,6 +361,7 @@ $("riskTitle").className=r.level;
 $("score").textContent=r.score+"/100";
 $("score").className="score "+r.level;
 $("fill").style.width=r.score+"%";
+$("fill").style.background=r.level==="high"?"var(--red)":r.level==="medium"?"var(--yellow)":"var(--green)";
 $("advice").textContent=r.advice;
 const container=$("signals");
 container.innerHTML="";
@@ -428,7 +425,6 @@ window.addEventListener("load",()=>{
 navigator.serviceWorker.register("./service-worker.js").catch(console.error);
 });
 }
-
 })();
 </script>
 </body>

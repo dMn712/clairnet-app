@@ -133,7 +133,7 @@
     const lower=text.toLowerCase(); const signals=[]; let score=7;
     const tests=[
       {re:/urgent|immédiatement|dans \d+ minutes?|dernier rappel|sans délai|expire aujourd'hui|action requise|suspendu|bloqué/,points:22,title:'Pression ou urgence',detail:'Le message pousse à agir rapidement, ce qui peut réduire le temps de réflexion.'},
-      {re:/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme|votre carte/,points:32,title:'Demande d’informations sensibles',detail:'Un partage de mot de passe, de code ou de données bancaires constitue un signal d’alerte majeur.'},
+      {re:/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme/,points:32,title:'Demande d’informations sensibles',detail:'Un partage de mot de passe, de code ou de données bancaires constitue un signal d’alerte majeur.'},      
       {re:/payer|paiement|réglez|régler|frais de livraison|remboursement|virement|amende|impayé|gagner|vous avez gagné|prix exceptionnel/,points:19,title:'Argent ou paiement demandé',detail:'Une demande d’argent inattendue doit être vérifiée auprès de la source officielle.'},
       {re:/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien/,points:15,title:'Invitation à cliquer ou se connecter',detail:'N’utilisez pas le lien reçu pour accéder à un compte ou effectuer un paiement.'},
       {re:/http:\/\/|https:\/\/|www\.|bit\.ly|tinyurl|t\.co\//,points:12,title:'Adresse web présente',detail:'La présence d’un lien ne suffit pas à prouver une fraude ; son domaine doit être vérifié séparément.'},

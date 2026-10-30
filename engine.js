@@ -2,8 +2,8 @@
   "use strict";
 
   // ==========================================
-  // CLAIRNET ENGINE 1.2.0
-  // Moteur local de détection de signaux suspects
+  // CLAIRNET ENGINE 1.3.0
+  // Détection locale des signaux suspects
   // ==========================================
 
   function normalize(value) {
@@ -19,7 +19,7 @@
       points: 14,
       title: "Pression ou urgence",
       detail: "Le message impose un délai ou cherche à provoquer une réaction précipitée.",
-      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque|dans les prochaines minutes)\b/
+      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque|dans les prochaines minutes|aujourd'hui avant|sous 24 heures)\b/
     },
     {
       id: "credentials",
@@ -47,14 +47,14 @@
       points: 12,
       title: "Invitation à cliquer ou se connecter",
       detail: "Le message incite à utiliser un lien pour effectuer une action ou accéder à un compte.",
-      pattern: /\b(cliquez ici|cliquer ici|cliquant sur le lien|cliquez sur le lien|cliquer sur le lien|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|rendez-vous sur le lien|consultez le lien)\b/
+      pattern: /\b(cliquez ici|cliquer ici|cliquant sur le lien|cliquez sur le lien|cliquer sur le lien|en cliquant|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|rendez-vous sur le lien|consultez le lien|cliquez sur ce lien|cliquant sur ce lien|en cliquant sur ce lien)\b/
     },
     {
       id: "threat",
       points: 13,
       title: "Menace ou conséquence alarmante",
       detail: "Une menace ou une conséquence grave peut servir à vous faire agir rapidement.",
-      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation|suspension definitive|blocage definitif)\b/
+      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation|suspension definitive|blocage definitif|colis detruit|colis retourne a l'expediteur)\b/
     },
     {
       id: "phone",
@@ -77,12 +77,36 @@
       detail: "Les coupons prépayés et certaines demandes de cryptomonnaies sont utilisés dans des escroqueries.",
       pattern: /\b(coupons? pcs|tickets? transcash|codes? neosurf|cartes? cadeaux|bitcoin|cryptomonnaies?)\b/
     },
+
+    // Détection spécifique aux livraisons
+    {
+      id: "delivery_context",
+      points: 8,
+      title: "Contexte de livraison ou de colis",
+      detail: "Le message concerne un colis, un suivi ou une livraison. Ce contexte peut être utilisé dans des tentatives d'hameçonnage.",
+      pattern: /\b(colis|livraison|livreur|transporteur|suivi de colis|numero de suivi|expedition|expediteur|destinataire|point relais|relais colis|retrait du colis|distribution du colis)\b/
+    },
+    {
+      id: "delivery_fee",
+      points: 18,
+      title: "Frais de livraison ou de douane demandés",
+      detail: "Une somme est réclamée pour débloquer, recevoir ou reprogrammer une livraison. Vérifiez cette demande directement auprès du transporteur.",
+      pattern: /\b(frais de livraison|frais supplementaires|frais de douane|frais de dossier|frais de reexpedition|payer les frais|regler les frais|droits de douane|petit paiement pour recevoir|paiement pour debloquer|taxe de livraison|supplement de livraison)\b/
+    },
+    {
+      id: "delivery_problem",
+      points: 10,
+      title: "Problème de livraison annoncé",
+      detail: "Le message annonce un colis bloqué, retenu ou une livraison impossible. Vérifiez le suivi depuis le site officiel du transporteur.",
+      pattern: /\b(colis bloque|colis retenu|colis en attente|livraison bloquee|livraison impossible|probleme de livraison|echec de livraison|adresse incomplete|adresse incorrecte|colis suspendu|colis non distribue|reprogrammer la livraison|reprogrammez votre livraison|nouvelle tentative de livraison)\b/
+    },
+
     {
       id: "known_brand",
       points: 5,
       title: "Marque ou service connu mentionné",
       detail: "Les noms de marques peuvent être usurpés. Vérifiez l'expéditeur par un canal indépendant.",
-      pattern: /\b(bnp paribas|credit agricole|societe generale|la banque postale|caisse d'epargne|banque populaire|boursobank|fortuneo|paypal|netflix|ameli|assurance maladie|impots|impots\.gouv\.fr|service public|service-public\.fr|la poste|colissimo|chronopost|mondial relay|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf)\b/
+      pattern: /\b(bnp paribas|credit agricole|societe generale|la banque postale|caisse d'epargne|banque populaire|boursobank|fortuneo|paypal|netflix|ameli|assurance maladie|impots|impots\.gouv\.fr|service public|service-public\.fr|la poste|colissimo|chronopost|mondial relay|relais colis|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf)\b/
     }
   ];
 
@@ -211,7 +235,7 @@
 
   window.ClairnetEngine = Object.freeze({
     analyze: analyze,
-    version: "1.2.0"
+    version: "1.3.0"
   });
 
 })();

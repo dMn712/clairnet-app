@@ -149,7 +149,7 @@ let current=null;
 
 const samples={
 delivery:"Bonjour, votre colis n° FR45892176 est en attente de confirmation concernant les frais de livraison. Vous pouvez consulter les informations relatives à votre envoi sur notre espace de suivi : www.suivi-colis-confirmation.com. Merci de votre confiance. Cordialement, votre service livraison.",
-bank:"ALERTE BANQUE : Votre compte sera bloqué dans les 2 heures. Une opération suspecte de 849,90 € a été détectée. Confirmez vos informations bancaires en cliquant sur ce lien : http://securite-banque-verification.com.",
+bank:"ALERTE BANQUE : Votre compte bancaire sera suspendu dans 2 heures. Pour éviter le blocage, confirmez immédiatement vos informations bancaires et débloquez votre compte ici : http://securite-banque-verification.com.",
 normal:"Bonjour, votre facture du mois est disponible dans votre espace client. Vous pouvez consulter son montant et sa date d'échéance en vous connectant à votre compte. Cordialement, votre service client."
 };
 
@@ -187,8 +187,27 @@ add(18,"Pression ou urgence","Le message pousse à agir rapidement. Prenez le te
 }
 
 // Informations personnelles et bancaires
-if(/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme|données bancaires/.test(t)){
+if(/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme|données bancaires|informations bancaires|identifiants bancaires|coordonnées de carte|code de connexion/.test(t)){
 add(32,"Demande d'informations sensibles","Un partage de mot de passe, de code ou de données bancaires est un signal d'alerte majeur.");
+}
+
+// Contexte et actions bancaires : règles renforcées
+const bankContext=/banque|bancaire|compte bancaire|espace bancaire|application bancaire|service bancaire|conseiller bancaire|votre banque/.test(t);
+
+const accountThreat=/(compte|accès|acces|carte bancaire|carte).{0,45}(bloqué|bloque|suspendu|suspendue|désactivé|desactive|restreint|fermé|ferme)|(bloqué|bloque|suspendu|suspendue|désactivé|desactive|restreint).{0,45}(compte|accès|acces|carte)/.test(t);
+
+const bankAction=/(débloquer|debloquer|réactiver|reactiver|rétablir|retablir|confirmer|confirmez|vérifier|vérifiez|verifier|valider|validez|sécuriser|securiser).{0,60}(compte|accès|acces|identité|identite|informations|coordonnées|coordonnees|bancaire)|(compte|accès|acces|informations|coordonnées|coordonnees).{0,60}(débloquer|debloquer|réactiver|reactiver|confirmer|confirmez|vérifier|verifier)/.test(t);
+
+if(bankContext){
+add(7,"Contexte bancaire détecté","Le message évoque une banque ou un compte. Ce contexte seul ne prouve pas une fraude.");
+}
+
+if(bankContext&&accountThreat){
+add(18,"Menace de blocage ou de suspension d'un compte","Les fraudeurs utilisent souvent la menace de blocage pour provoquer une réaction précipitée. Vérifiez directement dans votre application bancaire.");
+}
+
+if(bankContext&&bankAction){
+add(12,"Action demandée sur un compte bancaire","Une demande de déblocage, de réactivation ou de confirmation doit être vérifiée dans l'application officielle, jamais depuis un lien reçu.");
 }
 
 // Paiements et argent

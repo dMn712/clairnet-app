@@ -4,269 +4,432 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#090d18">
-<meta name="description" content="CLAIRNET - Analyse des messages et détection des signaux d'arnaque.">
+<meta name="description" content="CLAIRNET - Analyse indicative des messages suspects">
 <link rel="manifest" href="./manifest.json">
-<title>CLAIRNET — Vérifiez avant de cliquer</title>
+<title>CLAIRNET - Vérifiez avant de cliquer</title>
 <style>
-:root{--bg:#080c16;--card:#121c2d;--line:#293951;--text:#f2f6ff;--muted:#a0aec4;--cyan:#61e6da;--red:#ff7185;--yellow:#ffd166;--green:#50dda5}
+:root{--bg:#080c16;--card:#111b2b;--line:#293950;--text:#f2f6ff;--muted:#9cabc3;--cyan:#61e6da;--green:#50dda5;--yellow:#ffd166;--red:#ff7185}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-main{max-width:600px;margin:auto;padding:20px 16px 100px}
-header{display:flex;justify-content:space-between;align-items:center;padding:12px 0 25px}
-.logo{font-size:23px;font-weight:900;letter-spacing:2px;color:var(--cyan)}
-.status{font-size:10px;color:var(--green);border:1px solid #285348;padding:7px 10px;border-radius:30px}
-h1{font-size:32px;line-height:1.15;margin:10px 0}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif}
+.app{max-width:560px;margin:auto;padding:20px 16px 100px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.logo{font-size:22px;font-weight:900;letter-spacing:2px;color:var(--cyan)}
+.status{font-size:10px;color:var(--green);border:1px solid #285346;padding:7px 10px;border-radius:20px}
+.screen{display:none}.screen.active{display:block}
+h1{font-size:34px;line-height:1.1;margin:8px 0}
 h1 span{color:var(--cyan)}
-.subtitle{color:var(--muted);font-size:14px;line-height:1.6}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;margin:18px 0}
-label{display:block;font-size:13px;font-weight:bold;margin-bottom:10px}
-textarea{width:100%;min-height:155px;background:#091220;border:1px solid var(--line);border-radius:12px;color:white;padding:13px;font-size:14px;line-height:1.5;resize:vertical}
-button{cursor:pointer;border:0;border-radius:12px;padding:13px;font-weight:bold}
-.primary{background:var(--cyan);color:#07151c;width:100%;margin-top:12px}
-.secondary{background:#1c2b40;color:white;margin:5px 3px 5px 0;font-size:11px}
-h2{font-size:20px}
-.result{display:none}
-.result.show{display:block}
-.risk{font-size:21px;font-weight:bold;margin:12px 0}
-.score{font-size:27px;font-weight:bold;color:var(--cyan)}
-.bar{height:8px;background:#28364b;border-radius:20px;margin:12px 0}
-.fill{height:8px;width:0;background:var(--red);border-radius:20px}
-.signal{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0}
-.signal strong{font-size:13px}
-.signal p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:0}
-.advice{border:1px solid #27625c;background:#102b30;padding:14px;border-radius:12px;margin-top:15px;font-size:13px;line-height:1.6}
-nav{position:fixed;bottom:0;left:0;right:0;background:#0b1321;border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:12px}
-nav button{background:transparent;color:var(--muted);font-size:12px}
-nav button.active{color:var(--cyan)}
-.page{display:none}
-.page.active{display:block}
-.history-item{padding:12px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.5}
-.small{font-size:11px;color:var(--muted);line-height:1.6}
+h2{font-size:28px;margin:8px 0}
+p{line-height:1.6}
+.muted{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:19px;padding:17px;margin:16px 0}
+.label{display:block;font-size:13px;margin-bottom:10px}
+textarea{width:100%;min-height:155px;resize:vertical;background:#091221;border:1px solid var(--line);border-radius:13px;padding:13px;color:white;font:14px system-ui;line-height:1.5}
+textarea:focus{outline:2px solid var(--cyan)}
+button{cursor:pointer;font:inherit}
+.btn{width:100%;padding:14px;border:0;border-radius:13px;font-weight:800;margin-top:12px}
+.primary{background:linear-gradient(100deg,#75f0d9,#62cfe2);color:#07151c}
+.secondary{background:#1b2a40;color:white;border:1px solid var(--line)}
+.examples{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.example{background:#1b2a40;border:1px solid var(--line);color:#dce8f7;border-radius:20px;padding:8px 11px;font-size:11px}
+.small{font-size:11px;color:var(--muted)}
+.result{display:none}.result.show{display:block}
+.score{font-size:43px;font-weight:900;margin:12px 0}
+.high{color:var(--red)}.medium{color:var(--yellow)}.low{color:var(--green)}
+.bar{height:8px;background:#293950;border-radius:20px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--red);transition:width .4s}
+.signals{display:grid;gap:9px;margin-top:12px}
+.signal{border:1px solid var(--line);border-radius:12px;padding:12px}
+.signal strong{font-size:13px;display:block;margin-bottom:5px}
+.signal p{font-size:12px;color:var(--muted);margin:0}
+.advice{background:#102d30;border:1px solid #285653;border-radius:13px;padding:13px;margin-top:15px;font-size:13px;line-height:1.6}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,560px);display:grid;grid-template-columns:repeat(4,1fr);background:#0d1523;border-top:1px solid var(--line);padding:9px 5px calc(9px + env(safe-area-inset-bottom));z-index:5}
+.nav button{background:none;border:0;color:#8292ab;font-size:10px;padding:8px 2px}
+.nav button.active{color:var(--cyan);font-weight:800}
+.item{border:1px solid var(--line);padding:13px;border-radius:12px;margin:10px 0;overflow-wrap:anywhere}
+.item strong{font-size:12px}.item p{font-size:12px;color:var(--muted);margin:5px 0}
+.notice{background:#2b2618;border:1px solid #55472a;border-radius:12px;padding:12px;font-size:11px;color:#e5d5a8;line-height:1.6;margin:15px 0}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-<main>
+<div class="app">
 <header>
+<div>
 <div class="logo">CLAIRNET</div>
-<div class="status">● PROTECTION DÉMO</div>
+<div class="small">VÉRIFIEZ AVANT DE CLIQUER</div>
+</div>
+<div class="status">● MODE DÉMO</div>
 </header>
 
-<section id="home" class="page active">
-<h1>Vérifiez avant de <span>cliquer.</span></h1>
-<p class="subtitle">Collez un SMS, un e-mail ou un message suspect. CLAIRNET recherche les signaux d'alerte.</p>
+<section id="home" class="screen active">
+<div class="small">VOTRE RÉFLEXE SÉCURITÉ</div>
+<h1>Un message vous semble suspect ? <span>Vérifions.</span></h1>
+<p class="muted">Collez votre SMS, e-mail ou message. CLAIRNET recherche les indices d'arnaque.</p>
 
 <div class="card">
-<label for="message">Message à analyser</label>
+<label class="label" for="message">Texte du message à analyser</label>
 <textarea id="message" maxlength="5000" placeholder="Collez ici le message reçu..."></textarea>
-<button class="secondary" onclick="example('bank')">Exemple bancaire</button>
-<button class="secondary" onclick="example('parcel')">Exemple colis</button>
-<button class="secondary" onclick="example('normal')">Exemple normal</button>
-<button class="primary" onclick="analyze()">ANALYSER LE MESSAGE</button>
-<p class="small">Évitez de coller vos mots de passe, codes ou informations bancaires.</p>
+<div class="small" id="counter">0 / 5000</div>
+<div class="examples">
+<button class="example" data-sample="delivery">Faux colis</button>
+<button class="example" data-sample="bank">Fausse banque</button>
+<button class="example" data-sample="normal">Message normal</button>
+</div>
+<button class="btn primary" id="analyze">Analyser le message</button>
+<p class="small">Prototype local : aucune vérification de réputation en ligne n'est effectuée.</p>
 </div>
 
-<div id="result" class="card result">
-<h2>Résultat de l'analyse</h2>
-<div class="risk" id="risk"></div>
-<div class="score" id="score"></div>
+<div class="card result" id="result" aria-live="polite">
+<div class="small">RÉSULTAT DE L'ANALYSE</div>
+<h2 id="riskTitle">Analyse terminée</h2>
+<div class="score" id="score">0/100</div>
 <div class="bar"><div class="fill" id="fill"></div></div>
-<div id="signals"></div>
-<div class="advice" id="advice"></div>
-<button class="primary" onclick="resetAnalysis()">NOUVELLE ANALYSE</button>
+<div class="small">Indice indicatif, pas une probabilité de fraude.</div>
+<h3>Signaux repérés</h3>
+<div class="signals" id="signals"></div>
+<div class="advice"><strong>Le bon réflexe</strong><p id="advice"></p></div>
+<button class="btn secondary" id="copy">Copier le résumé</button>
+<button class="btn primary" id="new">Nouvelle analyse</button>
+<p class="small">Un score faible ne prouve jamais qu'un message est légitime.</p>
+</div>
+
+<div class="card">
+<h3>Les 3 réflexes à retenir</h3>
+<div class="item"><strong>1. Ne cédez pas à l'urgence</strong><p>Les fraudeurs cherchent souvent à vous faire agir trop vite.</p></div>
+<div class="item"><strong>2. Vérifiez par un autre canal</strong><p>Ouvrez vous-même le site ou l'application officielle.</p></div>
+<div class="item"><strong>3. Ne transmettez aucun code</strong><p>Ne partagez jamais vos mots de passe ou codes de validation.</p></div>
 </div>
 </section>
 
-<section id="history" class="page">
+<section id="history" class="screen">
+<div class="small">VOTRE ACTIVITÉ</div>
 <h2>Historique</h2>
-<p class="subtitle">Analyses effectuées pendant cette session.</p>
-<div class="card" id="historyList">Aucune analyse pour le moment.</div>
-<button class="secondary" onclick="clearHistory()">Effacer l'historique</button>
+<p class="muted">Analyses réalisées pendant cette session.</p>
+<div id="historyList"><p class="muted">Aucune analyse pour le moment.</p></div>
+<button class="btn secondary" id="clearHistory">Effacer l'historique</button>
 </section>
 
-<section id="guide" class="page">
+<section id="guide" class="screen">
+<div class="small">LES BONS RÉFLEXES</div>
 <h2>Conseils de sécurité</h2>
 <div class="card">
-<h3>1. Ne cédez pas à l'urgence</h3>
-<p class="subtitle">Les fraudeurs cherchent souvent à vous faire agir sans réfléchir.</p>
-<h3>2. Vérifiez les liens</h3>
-<p class="subtitle">Un nom de marque ou un logo ne garantit pas l'authenticité d'un site.</p>
-<h3>3. Ne transmettez aucun code</h3>
-<p class="subtitle">Ne communiquez jamais un code bancaire ou un mot de passe à une personne qui vous contacte.</p>
-<h3>4. Contactez l'organisme directement</h3>
-<p class="subtitle">Utilisez son application officielle ou saisissez vous-même son adresse dans le navigateur.</p>
+<div class="item"><strong>01 - Faites une pause</strong><p>Un message urgent qui réclame de l'argent ou des informations mérite une vérification.</p></div>
+<div class="item"><strong>02 - Examinez les liens</strong><p>Un logo ou un nom connu ne prouve pas que le site est officiel.</p></div>
+<div class="item"><strong>03 - Vérifiez directement</strong><p>Utilisez l'application officielle ou saisissez vous-même l'adresse du site.</p></div>
+<div class="item"><strong>04 - Signalez les arnaques</strong><p>En France, vous pouvez signaler les SMS frauduleux au 33700.</p></div>
 </div>
+<div class="notice">CLAIRNET est un outil indicatif. Il ne remplace pas une vérification auprès de l'organisme concerné.</div>
 </section>
 
-<section id="profile" class="page">
-<h2>À propos de CLAIRNET</h2>
+<section id="profile" class="screen">
+<div class="small">APPLICATION</div>
+<h2>Profil et paramètres</h2>
 <div class="card">
-<h3>Version prototype</h3>
-<p class="subtitle">CLAIRNET analyse localement le texte et certains indices présents dans les adresses Internet.</p>
-<p class="subtitle">Aucune base de réputation en ligne ni aucun moteur externe n'est encore connecté.</p>
-<p class="small">Un score faible ne garantit jamais qu'un message est sûr.</p>
+<h3>CLAIRNET</h3>
+<p class="muted">Prototype interactif - version améliorée.</p>
+<div class="item"><strong>Analyse des messages</strong><p>Règles locales activées.</p></div>
+<div class="item"><strong>Vérification en ligne</strong><p>Non activée.</p></div>
+<div class="item"><strong>Connexion à une IA</strong><p>Non activée.</p></div>
+<div class="item"><strong>Stockage</strong><p>Historique temporaire pendant la session.</p></div>
 </div>
+<button class="btn secondary" id="reset">Réinitialiser la démonstration</button>
 </section>
-</main>
+</div>
 
-<nav>
-<button class="active" onclick="showPage('home',this)">Analyser</button>
-<button onclick="showPage('history',this)">Historique</button>
-<button onclick="showPage('guide',this)">Conseils</button>
-<button onclick="showPage('profile',this)">Profil</button>
+<nav class="nav">
+<button class="active" data-screen="home">⌂<br>Analyser</button>
+<button data-screen="history">◷<br>Historique</button>
+<button data-screen="guide">◇<br>Conseils</button>
+<button data-screen="profile">⚙<br>Profil</button>
 </nav>
 
 <script>
-if("serviceWorker" in navigator){
- window.addEventListener("load",()=>{
-  navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
- });
-}
+(function(){
+"use strict";
 
 const $=id=>document.getElementById(id);
-let historyData=[];
+const input=$("message");
+let history=[];
+let current=null;
 
-function showPage(page,button){
- document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
- $(page).classList.add("active");
- document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
- button.classList.add("active");
- window.scrollTo(0,0);
+const samples={
+delivery:"Bonjour, votre colis n° FR45892176 est en attente de confirmation concernant les frais de livraison. Vous pouvez consulter les informations relatives à votre envoi sur notre espace de suivi : www.suivi-colis-confirmation.com. Merci de votre confiance. Cordialement, votre service livraison.",
+bank:"ALERTE BANQUE : Votre compte sera bloqué dans les 2 heures. Une opération suspecte de 849,90 € a été détectée. Confirmez vos informations bancaires en cliquant sur ce lien : http://securite-banque-verification.com.",
+normal:"Bonjour, votre facture du mois est disponible dans votre espace client. Vous pouvez consulter son montant et sa date d'échéance en vous connectant à votre compte. Cordialement, votre service client."
+};
+
+$("counter").textContent="0 / 5000";
+input.addEventListener("input",()=>{$("counter").textContent=input.value.length+" / 5000"});
+
+document.querySelectorAll("[data-sample]").forEach(button=>{
+button.addEventListener("click",()=>{
+input.value=samples[button.dataset.sample];
+$("counter").textContent=input.value.length+" / 5000";
+});
+});
+
+document.querySelectorAll("[data-screen]").forEach(button=>{
+button.addEventListener("click",()=>{
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+$(button.dataset.screen).classList.add("active");
+button.classList.add("active");
+window.scrollTo(0,0);
+});
+});
+
+function analyze(text){
+const t=text.toLowerCase();
+let score=4;
+const signals=[];
+const add=(points,title,detail)=>{
+score+=points;
+signals.push({title,detail});
+};
+
+// 1. Urgence et pression psychologique
+if(/urgent|immédiatement|dans \d+ minutes?|dernier rappel|sans délai|expire aujourd'hui|action requise|suspendu|bloqué|dernier jour/.test(t)){
+add(18,"Pression ou urgence","Le message pousse à agir rapidement. Prenez le temps de vérifier la demande.");
 }
 
-function example(type){
- const examples={
- bank:"ALERTE : Votre compte bancaire sera suspendu dans les 2 heures. Confirmez immédiatement vos informations personnelles en cliquant ici : https://securite-banque-verification.example/login",
- parcel:"Votre colis est bloqué. Réglez 1,99 € immédiatement pour éviter son retour. Cliquez ici : http://livraison-paiement.example",
- normal:"Bonjour ! Nous confirmons notre rendez-vous samedi à 14 heures. Bonne journée."
- };
- $("message").value=examples[type];
+// 2. Données personnelles et bancaires
+if(/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme|données bancaires/.test(t)){
+add(32,"Demande d'informations sensibles","Un partage de mot de passe, de code ou de données bancaires est un signal d'alerte majeur.");
 }
 
-function analyze(){
- const text=$("message").value.trim();
- if(!text){alert("Collez d'abord un message à analyser.");return;}
+// 3. Paiements et demandes d'argent
+const payment=/payer|paiement|réglez|régler|frais|douane|taxe|virement|amende|impayé|somme due|montant à régler|carte bancaire/.test(t);
+if(payment){
+add(15,"Argent ou paiement demandé","Une demande d'argent inattendue doit être vérifiée directement auprès de l'organisme concerné.");
+}
 
- let score=5;
- let signals=[];
- const add=(points,title,detail)=>{
-  score+=points;
-  signals.push({title,detail});
- };
+// 4. Invitations à cliquer
+if(/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien|consultez .* lien|rendez-vous sur/.test(t)){
+add(12,"Invitation à cliquer ou se connecter","N'utilisez pas un lien reçu pour payer ou accéder à un compte.");
+}
 
- const rules=[
-  [/urgent|immédiatement|dans \d+ minutes?|dernier rappel|sans délai|expire aujourd'hui|suspendu|bloqué/i,22,"Pression ou urgence","Le message cherche à provoquer une réaction précipitée."],
-  [/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme/i,32,"Demande d'informations sensibles","Un mot de passe, un code ou des données bancaires ne doivent pas être communiqués."],
-  [/payer|paiement|réglez|frais de livraison|remboursement|virement|amende|impayé|gagner|vous avez gagné/i,19,"Argent ou paiement demandé","Une demande d'argent inattendue doit être vérifiée."],
-  [/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via/i,15,"Invitation à cliquer ou se connecter","N'utilisez pas un lien reçu pour accéder à un compte."],
-  [/menace|poursuites|fermeture définitive|dernier avertissement|police|tribunal/i,17,"Menace ou conséquence alarmante","Un ton menaçant peut servir à vous faire agir sans vérifier."],
-  [/\bpaypal|netflix|ameli|impôts|la poste|colissimo|chronopost|dhl|amazon|apple|google|microsoft|orange|sfr|caf\b/i,5,"Marque ou service connu mentionné","Les noms de marques peuvent être usurpés."]
- ];
+// 5. Scénarios de livraison
+const delivery=/colis|livraison|livreur|transporteur|expédition|expedie|expédié|envoi|suivi de colis|suivi de livraison|point relais|relais colis|distribution/.test(t);
+const deliveryFees=/frais de livraison|frais d'expédition|frais d expedition|frais de douane|droits de douane|taxe de livraison|frais supplémentaires|frais supplementaires|complément de paiement|complement de paiement|reprogrammer la livraison|nouvelle tentative de livraison|colis en attente|colis bloqué|colis bloque|adresse de livraison/.test(t);
 
- rules.forEach(r=>{if(r[0].test(text))add(r[1],r[2],r[3]);});
+if(delivery){
+add(10,"Contexte de livraison ou de colis","Le message évoque un colis ou un transporteur. Ce contexte existe dans les messages légitimes comme dans les arnaques.");
+}
+if(deliveryFees){
+add(17,"Frais de livraison ou de douane évoqués","Les faux avis de frais supplémentaires sont fréquents dans les arnaques à la livraison. Vérifiez toute somme demandée sur le site officiel.");
+}
 
- const urls=text.match(/(?:https?:\/\/|www\.)[^\s<>"']+/gi)||[];
- const hosts=new Set();
+// 6. Détection des liens
+const urls=text.match(/(?:https?:\/\/|www\.)[^\s<>()]+/gi)||[];
+const hasUrl=urls.length>0;
+let suspiciousDomain=false;
 
- urls.forEach(raw=>{
-  const clean=raw.replace(/[),.;!?\]}>]+$/g,"");
-  let url;
-  try{
-   url=new URL(/^https?:\/\//i.test(clean)?clean:"https://"+clean);
-  }catch(e){
-   add(12,"Adresse Internet mal formée","Le lien ne peut pas être interprété correctement.");
-   return;
-  }
+if(hasUrl){
+add(8,"Adresse Internet présente","La présence d'un lien ne prouve pas une fraude. Son domaine doit être examiné.");
+}
 
-  const host=url.hostname.toLowerCase().replace(/^www\./,"");
-  if(hosts.has(host))return;
-  hosts.add(host);
+const domains=urls.map(raw=>{
+return raw.replace(/[),.;!?]+$/g,"").replace(/^https?:\/\//i,"").replace(/^www\./i,"").split(/[\/?#]/)[0].toLowerCase();
+});
 
-  if(url.username||url.password)
-   add(22,"Identifiants intégrés dans l'adresse","Cette adresse contient des informations pouvant masquer sa destination réelle.");
+for(const domain of domains){
+const labels=domain.split(".");
+const reserved=/\.(example|invalid|test)$/i.test(domain);
+const shortener=/^(bit\.ly|tinyurl\.com|t\.co|goo\.gl|ow\.ly|cutt\.ly|is\.gd)$/i.test(domain);
+const ip=/^(?:\d{1,3}\.){3}\d{1,3}$/.test(domain);
+const punycode=domain.includes("xn--");
+const brand=/(laposte|colissimo|chronopost|mondialrelay|dhl|ups|fedex|amazon|paypal|ameli|impots|banque|orange|sfr)/i.test(domain);
+const action=/(suivi|colis|livraison|paiement|confirmation|verification|securite|compte|support|douane|frais)/i.test(domain);
+const lookalike=(brand&&action)||(delivery&&action);
 
-  if(url.protocol==="http:")
-   add(10,"Connexion non chiffrée (HTTP)","Cette adresse n'utilise pas HTTPS. Cela ne prouve pas une fraude, mais impose de la prudence.");
+if(reserved){
+add(0,"Domaine réservé de démonstration","Cette extension est réservée aux exemples et ne représente pas un véritable site de transporteur.");
+}else if(shortener||ip||punycode||labels.length>=4||lookalike){
+suspiciousDomain=true;
+}
+}
 
-  if(/^\d{1,3}(\.\d{1,3}){3}$/.test(host))
-   add(22,"Adresse IP utilisée comme destination","Le lien pointe directement vers une adresse IP plutôt que vers un nom de domaine habituel.");
+if(suspiciousDomain){
+add(14,"Caractéristiques du domaine à examiner","Le domaine présente des caractéristiques pouvant être utilisées dans des liens trompeurs : raccourcisseur, adresse IP ou mots de suivi et de paiement.");
+}
 
-  if(host.split(".").some(part=>part.startsWith("xn--")))
-   add(18,"Caractères particuliers dans le domaine","L'encodage du domaine peut masquer des caractères ressemblant à ceux d'une marque.");
+// 7. Usurpation possible d'un transporteur
+if(delivery&&hasUrl&&/(colissimo|chronopost|mondial relay|mondialrelay|la poste|dhl|ups|fedex)/i.test(t)){
+add(8,"Nom d'un transporteur associé à un lien","Un nom de transporteur peut être usurpé. Vérifiez le suivi sur son site officiel.");
+}
 
-  if(/(^|\.)(bit\.ly|tinyurl\.com|t\.co|goo\.gl|ow\.ly|is\.gd|cutt\.ly|rb\.gy)$/i.test(host))
-   add(16,"Lien raccourci","La destination finale est masquée. Vérifiez son origine.");
+// 8. Marques connues
+if(/paypal|netflix|ameli|assurance maladie|impôts|impots|service-public|la poste|colissimo|chronopost|mondial relay|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf/.test(t)){
+add(3,"Marque ou service connu mentionné","Les noms de marques peuvent être usurpés. Leur présence ne prouve pas l'identité de l'expéditeur.");
+}
 
-  if(/(^|\.)(example|invalid|test)$/.test(host))
-   add(10,"Domaine réservé de démonstration","Cette adresse utilise une extension réservée aux exemples.");
+// 9. Menaces
+if(/menace|poursuites|fermeture définitive|dernier avertissement|police|procès|tribunal/.test(t)){
+add(15,"Menace ou conséquence alarmante","Un ton menaçant peut servir à pousser à agir sans vérifier.");
+}
 
-  if(host.length>55||host.split(".").length>4)
-   add(8,"Domaine inhabituellement complexe","Le domaine est long ou comporte de nombreux sous-domaines.");
- });
+// 10. Faux conseiller et rappel téléphonique
+if(/rappeler immédiatement|rappelez immédiatement|appelez immédiatement|service sécurité|service securite|service antifraude|centre d'opposition|conseiller sécurité/.test(t)){
+add(20,"Demande de rappel téléphonique suspecte","Retrouvez vous-même le numéro officiel de l'organisme.");
+}
 
- score=Math.min(score,96);
- const level=score>=55?"high":score>=28?"medium":"low";
- const label=level==="high"?"Risque élevé suspecté":level==="medium"?"Prudence recommandée":"Peu de signaux repérés";
+// 11. Moyens de paiement risqués et accès à distance
+if(/carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|anydesk|teamviewer|rustdesk|prise en main à distance|virement instantané/.test(t)){
+add(20,"Moyen de paiement ou accès à distance à risque","Les coupons, cryptomonnaies et outils de prise en main à distance sont fréquemment détournés.");
+}
 
- if(!signals.length){
-  signals.push({title:"Aucun indice courant détecté",detail:"Cela ne garantit pas que le message est légitime."});
- }
+// 12. Pondération des indices cumulés
+const combination=[delivery,deliveryFees,hasUrl,suspiciousDomain,payment].filter(Boolean).length;
+if(combination>=3)score+=7;
 
- if(urls.length){
-  signals.push({title:"Réputation du lien non vérifiée en ligne",detail:"CLAIRNET ne consulte pas encore de base de réputation et ne suit pas les redirections."});
- }
+score=Math.min(100,score);
 
- $("risk").textContent=label;
- $("risk").style.color=level==="high"?"var(--red)":level==="medium"?"var(--yellow)":"var(--green)";
- $("score").textContent="Indice indicatif : "+score+"/100";
- $("fill").style.width=score+"%";
- $("fill").style.background=level==="high"?"var(--red)":level==="medium"?"var(--yellow)":"var(--green)";
+let level="low";
+if(score>=55)level="high";
+else if(score>=25)level="medium";
 
- $("signals").innerHTML="";
- signals.forEach((s,i)=>{
-  const div=document.createElement("div");
-  div.className="signal";
-  const strong=document.createElement("strong");
-  strong.textContent=(i+1)+". "+s.title;
-  const p=document.createElement("p");
-  p.textContent=s.detail;
-  div.append(strong,p);
-  $("signals").append(div);
- });
+const title=level==="high"?"Risque élevé suspecté":level==="medium"?"Prudence recommandée":"Peu de signaux repérés";
 
- $("advice").textContent=level==="high"
- ?"Ne cliquez pas et ne payez rien. Contactez l'organisme via son application ou son site officiel, ouvert séparément."
- :level==="medium"
- ?"Vérifiez l'expéditeur par un canal indépendant. Ne communiquez aucun code ni identifiant."
- :"Restez vigilant. Un message peut être frauduleux même si peu de signaux sont détectés.";
+const advice=level==="high"
+?"Ne cliquez pas et ne payez rien. Contactez l'organisme par son application ou son site officiel, ouvert séparément."
+:level==="medium"
+?"Vérifiez l'expéditeur par un canal indépendant avant toute action. N'utilisez pas le lien reçu."
+:"Restez vigilant. Un score faible ne garantit pas qu'un message est légitime.";
 
- $("result").classList.add("show");
- historyData.unshift({text,score,label});
- renderHistory();
- $("result").scrollIntoView({behavior:"smooth"});
+if(signals.length===0){
+signals.push({title:"Aucun indice courant détecté",detail:"Cela ne garantit pas que le message est légitime."});
+}
+
+if(hasUrl){
+signals.push({title:"Réputation du lien non vérifiée en ligne",detail:"CLAIRNET ne consulte pas de base de réputation et ne suit pas les redirections."});
+}
+
+return {text,score,level,title,advice,signals,time:new Date()};
+}
+
+function display(r){
+current=r;
+$("result").classList.add("show");
+$("riskTitle").textContent=r.title;
+$("riskTitle").className=r.level;
+$("score").textContent=r.score+"/100";
+$("score").className="score "+r.level;
+$("fill").style.width=r.score+"%";
+$("fill").style.background=r.level==="high"?"var(--red)":r.level==="medium"?"var(--yellow)":"var(--green)";
+$("advice").textContent=r.advice;
+
+const container=$("signals");
+container.innerHTML="";
+r.signals.forEach((s,i)=>{
+const div=document.createElement("div");
+div.className="signal";
+const strong=document.createElement("strong");
+strong.textContent=(i+1)+". "+s.title;
+const p=document.createElement("p");
+p.textContent=s.detail;
+div.append(strong,p);
+container.append(div);
+});
+history.unshift(r);
+renderHistory();
 }
 
 function renderHistory(){
- const list=$("historyList");
- list.innerHTML="";
- if(!historyData.length){list.textContent="Aucune analyse pour le moment.";return;}
- historyData.forEach(item=>{
-  const div=document.createElement("div");
-  div.className="history-item";
-  div.textContent=item.label+" — "+item.score+"/100 — "+item.text.slice(0,100);
-  list.append(div);
- });
+const list=$("historyList");
+list.innerHTML="";
+if(!history.length){
+list.textContent="Aucune analyse pour le moment.";
+return;
+}
+history.forEach((r,i)=>{
+const div=document.createElement("div");
+div.className="item";
+const title=document.createElement("strong");
+title.textContent=r.title+" - "+r.score+"/100";
+const p=document.createElement("p");
+p.textContent=r.text.slice(0,110)+(r.text.length>110?"...":"");
+const button=document.createElement("button");
+button.className="example";
+button.textContent="Revoir";
+button.addEventListener("click",()=>{input.value=r.text;displayExisting(r)});
+div.append(title,p,button);
+list.append(div);
+});
 }
 
-function clearHistory(){
- historyData=[];
- renderHistory();
+function displayExisting(r){
+current=r;
+$("result").classList.add("show");
+$("riskTitle").textContent=r.title;
+$("riskTitle").className=r.level;
+$("score").textContent=r.score+"/100";
+$("score").className="score "+r.level;
+$("fill").style.width=r.score+"%";
+$("advice").textContent=r.advice;
+const container=$("signals");
+container.innerHTML="";
+r.signals.forEach((s,i)=>{
+const div=document.createElement("div");
+div.className="signal";
+const strong=document.createElement("strong");
+strong.textContent=(i+1)+". "+s.title;
+const p=document.createElement("p");
+p.textContent=s.detail;
+div.append(strong,p);
+container.append(div);
+});
+document.querySelector('[data-screen="home"]').click();
 }
 
-function resetAnalysis(){
- $("message").value="";
- $("result").classList.remove("show");
- window.scrollTo(0,0);
+$("analyze").addEventListener("click",()=>{
+const text=input.value.trim();
+if(!text){alert("Collez d'abord un message à analyser.");return;}
+display(analyze(text));
+$("result").scrollIntoView({behavior:"smooth"});
+});
+
+$("new").addEventListener("click",()=>{
+input.value="";
+$("counter").textContent="0 / 5000";
+$("result").classList.remove("show");
+window.scrollTo(0,0);
+});
+
+$("copy").addEventListener("click",()=>{
+if(!current)return;
+const summary="CLAIRNET - "+current.title+" - "+current.score+"/100\n"+
+current.signals.map(s=>"- "+s.title+": "+s.detail).join("\n")+
+"\nConseil : "+current.advice+
+"\nRésultat indicatif, non certifié.";
+if(navigator.clipboard&&navigator.clipboard.writeText){
+navigator.clipboard.writeText(summary).then(()=>alert("Résumé copié.")).catch(()=>alert("Copie indisponible."));
+}else{
+alert("La copie n'est pas disponible dans ce navigateur.");
 }
+});
+
+$("clearHistory").addEventListener("click",()=>{
+history=[];
+renderHistory();
+});
+
+$("reset").addEventListener("click",()=>{
+input.value="";
+$("counter").textContent="0 / 5000";
+$("result").classList.remove("show");
+history=[];
+current=null;
+renderHistory();
+document.querySelector('[data-screen="home"]').click();
+});
+
+if("serviceWorker" in navigator){
+window.addEventListener("load",()=>{
+navigator.serviceWorker.register("./service-worker.js").catch(console.error);
+});
+}
+
+})();
 </script>
 </body>
 </html>

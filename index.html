@@ -130,32 +130,19 @@
   input.addEventListener('input',()=>$('#charCount').textContent=input.value.length+' / 5000');
   $$('.example').forEach(btn=>btn.addEventListener('click',()=>{input.value=samples[btn.dataset.example];$('#charCount').textContent=input.value.length+' / 5000';input.focus();toast('Exemple chargé. Appuyez sur « Analyser le message ».')}));
 
-  function analyze(text){
-    const lower=text.toLowerCase(); const signals=[]; let score=7;
-    const tests=[
-      {re:/urgent|immédiatement|dans \d+ minutes?|dernier rappel|sans délai|expire aujourd'hui|action requise|suspendu|bloqué/,points:22,title:'Pression ou urgence',detail:'Le message pousse à agir rapidement, ce qui peut réduire le temps de réflexion.'},
-      {re:/mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnées bancaires|numéro de carte|cryptogramme/,points:32,title:'Demande d’informations sensibles',detail:'Un partage de mot de passe, de code ou de données bancaires constitue un signal d’alerte majeur.'},      
-      {re:/payer|paiement|réglez|régler|frais de livraison|remboursement|virement|amende|impayé|gagner|vous avez gagné|prix exceptionnel/,points:19,title:'Argent ou paiement demandé',detail:'Une demande d’argent inattendue doit être vérifiée auprès de la source officielle.'},
-      {re:/cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien/,points:15,title:'Invitation à cliquer ou se connecter',detail:'N’utilisez pas le lien reçu pour accéder à un compte ou effectuer un paiement.'},
-      {re:/http:\/\/|https:\/\/|www\.|bit\.ly|tinyurl|t\.co\//,points:12,title:'Adresse web présente',detail:'La présence d’un lien ne suffit pas à prouver une fraude ; son domaine doit être vérifié séparément.'},
-      {re:/\b(?:paypal|netflix|ameli|assurance maladie|impôts|impot|impots\.gouv\.fr|service public|service-public\.fr|la poste|colissimo|chronopost|mondial relay|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf)\b/i,points:5,title:'Marque ou service connu mentionné',detail:'Les noms de marques peuvent être usurpés. Vérifiez l’expéditeur par un canal indépendant.'},
-      {re:/menace|poursuites|fermeture définitive|dernier avertissement|police|procès|tribunal/,points:17,title:'Menace ou conséquence alarmante',detail:'Un ton menaçant peut servir à pousser à prendre une décision sans vérifier.'},
-      {re:/rappeler immédiatement|rappelez immédiatement|appelez immédiatement|rappeler notre service|appelez notre service|service sécurité|service securite|service antifraude|service anti-fraude|centre d'opposition|numéro d'urgence|numero d'urgence|conseiller sécurité|conseiller securite/,points:22,title:'Demande de rappel téléphonique suspecte',detail:'Un message peut vous inciter à appeler un faux service bancaire ou de sécurité. Retrouvez vous-même le numéro officiel sur le site ou l’application de l’organisme.'},
-      {re:/carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|cryptomonnaies|crypto|(?:installez|installer|téléchargez|telechargez|ouvrez|lancez).{0,40}(?:anydesk|teamviewer|rustdesk)|(?:anydesk|teamviewer|rustdesk).{0,80}(?:code|identifiant|accès|acces|connexion|communiquer|transmettez|donnez|partagez)|prise en main à distance|virement instantané/,points:24,title:'Moyen de paiement ou accès à distance à risque',detail:'Les demandes de paiement par coupons, cryptomonnaies ou prise en main à distance sont fréquentes dans certaines fraudes. Vérifiez la demande par un canal indépendant.'},
-    ];
-    tests.forEach(t=>{if(t.re.test(lower)){score+=t.points;signals.push({title:t.title,detail:t.detail})}});
-    const links=(text.match(/(?:https?:\/\/|www\.)\S+/gi)||[]);
-    const suspiciousEnding=/\.(example|invalid|test)(?:\b|\/)/i.test(text);
-    if(suspiciousEnding){score+=10;signals.push({title:'Domaine réservé de démonstration',detail:'L’adresse utilise une extension réservée aux exemples. Elle a été insérée pour ce test et ne doit pas être considérée comme un site réel.'})}
-    score=Math.min(96,score);
-    let level='low'; if(score>=55)level='high'; else if(score>=28)level='medium';
-    let label=level==='high'?'Risque élevé suspecté':level==='medium'?'Prudence recommandée':'Peu de signaux repérés';
-    let caption=level==='high'?'Plusieurs indices d’alerte ressortent du texte.':level==='medium'?'Certains éléments méritent une vérification indépendante.':'Les règles de démonstration n’ont détecté que peu d’indices.';
-    let advice=level==='high'?'Ne cliquez pas et ne payez rien pour le moment. Contactez l’organisme via son application ou son site officiel, ouvert séparément.':level==='medium'?'Avant d’agir, vérifiez l’expéditeur par un canal indépendant. Ne communiquez aucun code ni identifiant.':'Restez vigilant : un message peut être frauduleux même sans les indices repérés ici. Vérifiez l’expéditeur si une action vous est demandée.';
-    if(!signals.length){signals.push({title:'Aucun indice courant détecté',detail:'Cela ne confirme pas que le message est légitime. Le prototype ne consulte ni l’expéditeur ni une base de réputation des liens.'})}
-    if(links.length){signals.push({title:'Lien non vérifié en ligne',detail:'Le prototype ne visite pas cette adresse, n’en vérifie pas la réputation et ne détecte pas les redirections.'})}
-    return {text,score,level,label,caption,advice,signals,time:new Date()};
+  
+function analyze(text) {
+  if (
+    !window.ClairnetEngine ||
+    typeof window.ClairnetEngine.analyze !== "function"
+  ) {
+    throw new Error(
+      "Le moteur CLAIRNET n'a pas pu être chargé."
+    );
   }
+
+  return window.ClairnetEngine.analyze(text);
+}
   const iconSvg={high:'<svg width="27" height="27" viewBox="0 0 24 24" fill="none"><path d="M12 3 22 20H2L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5m0 3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',medium:'<svg width="27" height="27" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5v5m0 3h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',low:'<svg width="27" height="27" viewBox="0 0 24 24" fill="none"><path d="m5 12 4.2 4.2L19 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
   function renderResult(r){
     currentResult=r;resultCard.dataset.level=r.level;$('#resultIcon').innerHTML=iconSvg[r.level];$('#riskLabel').textContent=r.label;$('#riskCaption').textContent=r.caption;$('#scoreText').textContent=r.score+' / 100';$('#scoreFill').style.width=r.score+'%';$('#adviceText').textContent=r.advice;

@@ -1,1 +1,197 @@
+(function () {
+  "use strict";
 
+  function normalize(value) {
+    return String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
+  const RULES = [
+    {
+      id: "urgency",
+      points: 14,
+      title: "Pression ou urgence",
+      detail: "Le message impose un délai ou cherche à provoquer une réaction précipitée.",
+      pattern: /\b(urgent|immediatement|sans delai|dernier rappel|action requise|dans \d+ minutes?|expire aujourd'hui|suspendu|bloque)\b/
+    },
+    {
+      id: "credentials",
+      points: 30,
+      title: "Demande d'informations sensibles",
+      detail: "Le message évoque la transmission de mots de passe, de codes ou de données bancaires.",
+      pattern: /\b(mot de passe|identifiant|code sms|code de validation|code confidentiel|coordonnees bancaires|numero de carte|cryptogramme|code secret)\b/
+    },
+    {
+      id: "payment",
+      points: 17,
+      title: "Demande d'argent ou de paiement",
+      detail: "Une demande de paiement ou de transfert inattendue mérite une vérification indépendante.",
+      pattern: /\b(payer|paiement|reglez|regler|frais de livraison|remboursement|virement|amende|impaye|carte cadeau|pcs|transcash|neosurf|bitcoin|cryptomonnaie|crypto)\b/
+    },
+    {
+      id: "link_action",
+      points: 12,
+      title: "Invitation à cliquer ou se connecter",
+      detail: "Le message incite à utiliser un lien pour effectuer une action.",
+      pattern: /\b(cliquez ici|cliquer ici|suivez ce lien|lien ci-dessous|confirmez via|connectez-vous via|ouvrez le lien)\b/
+    },
+    {
+      id: "threat",
+      points: 13,
+      title: "Menace ou conséquence alarmante",
+      detail: "Une menace ou une conséquence grave peut servir à vous faire agir rapidement.",
+      pattern: /\b(poursuites judiciaires|fermeture definitive|dernier avertissement|saisie judiciaire|tribunal|condamnation)\b/
+    },
+    {
+      id: "phone",
+      points: 18,
+      title: "Demande de rappel suspecte",
+      detail: "Le message demande de rappeler un prétendu service de sécurité ou un conseiller.",
+      pattern: /\b(rappelez|rappeler|appelez|appeler)\b.{0,100}\b(service securite|service antifraude|centre d'opposition|conseiller bancaire|service bancaire)\b/
+    },
+    {
+      id: "remote",
+      points: 25,
+      title: "Accès à distance potentiellement dangereux",
+      detail: "Une demande d'installation d'un logiciel ou de communication d'un code d'accès à distance est présente.",
+      pattern: /\b(anydesk|teamviewer|rustdesk)\b.{0,100}\b(code|identifiant|acces|installation|installer|communiquer|transmettre|partager)\b|\b(installez|installer|telechargez)\b.{0,100}\b(anydesk|teamviewer|rustdesk)\b/
+    },
+    {
+      id: "gift",
+      points: 22,
+      title: "Moyen de paiement à risque",
+      detail: "Les coupons prépayés et certaines demandes de cryptomonnaies sont utilisés dans des escroqueries.",
+      pattern: /\b(coupons? pcs|tickets? transcash|codes? neosurf|cartes? cadeaux|bitcoin|cryptomonnaies?)\b/
+    }
+  ];
+
+  function extractLinks(text) {
+    return text.match(
+      /(?:https?:\/\/|www\.)[^\s<>"']+/gi
+    ) || [];
+  }
+
+  function analyze(text) {
+    const original = String(text || "").trim();
+
+    if (!original) {
+      throw new Error("Le message à analyser est vide.");
+    }
+
+    const normalized = normalize(original);
+    const signals = [];
+    let score = 5;
+
+    RULES.forEach(function (rule) {
+      if (rule.pattern.test(normalized)) {
+        score += rule.points;
+        signals.push({
+          title: rule.title,
+          detail: rule.detail
+        });
+      }
+    });
+
+    const links = extractLinks(original);
+
+    if (links.length > 0) {
+      score += 8;
+
+      signals.push({
+        title: "Adresse Internet présente",
+        detail: "La présence d'un lien ne prouve pas une fraude. Son adresse et sa réputation doivent être vérifiées."
+      });
+    }
+
+    if (/xn--/i.test(original)) {
+      score += 15;
+
+      signals.push({
+        title: "Nom de domaine international à examiner",
+        detail: "Certains domaines utilisent des caractères encodés pour imiter des adresses légitimes."
+      });
+    }
+
+    if (/\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(original)) {
+      score += 12;
+
+      signals.push({
+        title: "Adresse IP présente",
+        detail: "Une adresse IP directement utilisée dans un message mérite une vérification."
+      });
+    }
+
+    const suspiciousEnding =
+      /\.(example|invalid|test)(?:\b|\/|$)/i.test(original);
+
+    if (suspiciousEnding) {
+      score += 10;
+
+      signals.push({
+        title: "Domaine réservé de démonstration",
+        detail: "Cette extension est réservée aux exemples et ne correspond pas à un site public ordinaire."
+      });
+    }
+
+    score = Math.min(95, score);
+
+    let level = "low";
+
+    if (score >= 55) {
+      level = "high";
+    } else if (score >= 28) {
+      level = "medium";
+    }
+
+    const labels = {
+      low: "Peu de signaux repérés",
+      medium: "Prudence recommandée",
+      high: "Risque élevé suspecté"
+    };
+
+    const captions = {
+      low: "Les règles de détection ont repéré peu d'indices.",
+      medium: "Certains éléments méritent une vérification indépendante.",
+      high: "Plusieurs indices d'alerte ressortent du message."
+    };
+
+    const advice = {
+      low: "Restez vigilant. Un message peut être frauduleux même sans indice détecté.",
+      medium: "Vérifiez l'expéditeur par un canal indépendant. Ne communiquez aucun code ni mot de passe.",
+      high: "Ne cliquez pas et ne payez rien pour le moment. Contactez l'organisme par son application ou son site officiel."
+    };
+
+    if (signals.length === 0) {
+      signals.push({
+        title: "Aucun indice courant détecté",
+        detail: "Cela ne garantit pas que le message est légitime. Cette analyse repose sur des règles locales."
+      });
+    }
+
+    if (links.length > 0) {
+      signals.push({
+        title: "Lien non vérifié en ligne",
+        detail: "Le moteur ne consulte pas encore de base de réputation et ne vérifie pas les redirections."
+      });
+    }
+
+    return {
+      text: original,
+      score: score,
+      level: level,
+      label: labels[level],
+      caption: captions[level],
+      advice: advice[level],
+      signals: signals,
+      time: new Date()
+    };
+  }
+
+  window.ClairnetEngine = Object.freeze({
+    analyze: analyze,
+    version: "1.0.0"
+  });
+
+})();

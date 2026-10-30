@@ -64,6 +64,13 @@
       title: "Moyen de paiement à risque",
       detail: "Les coupons prépayés et certaines demandes de cryptomonnaies sont utilisés dans des escroqueries.",
       pattern: /\b(coupons? pcs|tickets? transcash|codes? neosurf|cartes? cadeaux|bitcoin|cryptomonnaies?)\b/
+    },
+    {
+      id: "known_brand",
+      points: 5,
+      title: "Marque ou service connu mentionné",
+      detail: "Les noms de marques peuvent être usurpés. Vérifiez l'expéditeur par un canal indépendant.",
+      pattern: /\b(bnp paribas|credit agricole|societe generale|la banque postale|caisse d'epargne|banque populaire|boursobank|fortuneo|paypal|netflix|ameli|assurance maladie|impots|impots\.gouv\.fr|service public|service-public\.fr|la poste|colissimo|chronopost|mondial relay|dhl|ups|fedex|amazon|apple|google|microsoft|orange|sfr|bouygues|free|caf)\b/
     }
   ];
 
@@ -191,7 +198,7 @@
 
   window.ClairnetEngine = Object.freeze({
     analyze: analyze,
-    version: "1.0.0"
+    version: "1.1.0"
   });
 
 })();
